@@ -27,8 +27,7 @@ jobs:
         distribution: 'https://services.gradle.org/distributions/gradle-8.13-bin.zip'
 
     - name: Build Spring Boot JAR using Gradle
-      run: |
-        ./gradlew clean build -x test  # Gradle을 사용하여 JAR 파일 빌드 (테스트는 생략)
+      run: echo $(pwd) && echo $(ls) && ./gradlew clean build -x test  # Gradle을 사용하여 JAR 파일 빌드 (테스트는 생략)
 
   docker:
     runs-on: ubuntu-latest  # Ubuntu 환경에서 실행
@@ -42,7 +41,7 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}  # Docker Hub 비밀번호
 
     - name: Build Docker image
-      run: echo $(pwd) && docker build -t acoursove2/springtest:latest .
+      run: echo $(pwd) && echo $(ls) && docker build -t acoursove2/springtest:latest .
 
     - name: Push Docker image to Docker Hub
       run: |
