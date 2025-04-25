@@ -6,7 +6,7 @@ on:
       - master
 
 jobs:
-  build:
+  build_push:
     runs-on: ubuntu-latest  # Ubuntu 환경에서 실행
 
     steps:
@@ -48,7 +48,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    needs: docker  # docker 작업이 완료된 후 실행됨
+    needs: build_push  # docker 작업이 완료된 후 실행됨
 
     steps:
     - name: SSH into EC2 and deploy with Podman
