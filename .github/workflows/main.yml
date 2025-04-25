@@ -27,7 +27,7 @@ jobs:
         distribution: 'https://services.gradle.org/distributions/gradle-8.13-bin.zip'
 
     - name: Build Spring Boot JAR using Gradle
-      run: echo $(pwd) && echo $(ls) && ./gradlew clean build -x test  # Gradle을 사용하여 JAR 파일 빌드 (테스트는 생략)
+      run: ./gradlew clean build -x test  # Gradle을 사용하여 JAR 파일 빌드 (테스트는 생략)
 
   # docker: // 젠킨스처럼 잡별로 디렉토리가 달라져서 jar빌드와 이미지 빌드 onestep으로 가야함
     # runs-on: ubuntu-latest  # Ubuntu 환경에서 실행
@@ -40,7 +40,8 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}  # Docker Hub 비밀번호
 
     - name: Build Docker image
-      run: echo $(pwd) && echo $(ls) && docker build -t acoursove2/springtest:latest .
+      run: | 
+         docker build -t acoursove2/springtest:latest .
 
     - name: Push Docker image to Docker Hub
       run: |
@@ -48,6 +49,8 @@ jobs:
 
   deploy:  # 주석 처리된 build_push 작업과 구분
     runs-on: ubuntu-latest
+    needs: build_push
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -65,18 +68,8 @@ jobs:
       - name: SSH into EC2 and deploy with Podman
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@${{ secrets.AWS_EC2_IP }} << 'EOF'
-            echo "Pulling image..."
             sudo podman pull ${{ secrets.DOCKER_USERNAME }}/springtest:latest
-            echo "Stopping existing container..."
             sudo podman stop springtest || true
-            echo "Removing existing container..."
             sudo podman rm springtest || true
-            echo "Running new container..."
             sudo podman run -d --name springtest -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/springtest:latest
-            
-            # 확인을 위한 명령어들 추가
-            echo "Checking container status..."
-            sudo podman ps
-            echo "Checking container logs..."
-            sudo podman logs springtest
           EOF
