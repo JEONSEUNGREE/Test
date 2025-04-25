@@ -25,8 +25,12 @@ jobs:
       - name: SSH into EC2 and deploy with Podman
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@${{ secrets.AWS_EC2_IP }} << 'EOF'
+            echo "Pulling image..."
             sudo podman pull ${{ secrets.DOCKER_USERNAME }}/springtest:latest
+            echo "Stopping existing continer..."
             sudo podman ps -q --filter "name=springtest" | xargs -I {} sudo podman stop {}
+            echo "Removing existing continer..."
             sudo podman ps -a -q --filter "name=springtest" | xargs -I {} sudo podman rm {}
+            echo "Running new container..."
             sudo podman run -d --name springtest -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/springtest:latest
           EOF
