@@ -23,6 +23,7 @@ jobs:
       uses: gradle/wrapper-validation-action@v1
       with:
         gradle-version: '8.13'  # 원하는 Gradle 버전 설정 (여기서는 8.13)
+        distribution: 'https://services.gradle.org/distributions/gradle-8.13-bin.zip'
 
     - name: Build Spring Boot JAR using Gradle
       run: |
