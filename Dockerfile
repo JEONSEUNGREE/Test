@@ -1,5 +1,5 @@
 # OpenJDK 21 Alpine 이미지 사용
-FROM openjdk:21-alpine
+FROM eclipse-temurin:21-alpine
 
 # JAR 파일을 컨테이너에 추가
 WORKDIR /app
