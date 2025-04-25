@@ -43,11 +43,11 @@ jobs:
 
     - name: Build Docker image
       run: |
-        docker build -t acoursove2/springTest:latest .
+        docker build -t acoursove2/springtest:latest .
 
     - name: Push Docker image to Docker Hub
       run: |
-        docker push acoursove2/springTest:latest
+        docker push acoursove2/springtest:latest
 
   deploy:
     runs-on: ubuntu-latest
@@ -58,12 +58,12 @@ jobs:
       run: |
         ssh -o StrictHostKeyChecking=no -i ${{ secrets.AWS_SSH_KEY }} ubuntu@${{ secrets.AWS_EC2_IP }} << 'EOF'
           # EC2에서 Podman을 사용하여 Docker Hub에서 이미지 풀
-          sudo podman pull ${{ secrets.DOCKER_USERNAME }}/springTest:latest
+          sudo podman pull ${{ secrets.DOCKER_USERNAME }}/springtest:latest
           
           # 기존 컨테이너가 실행 중이면 종료하고 새 컨테이너 실행
-          sudo podman ps -q --filter "name=springTest" | xargs -I {} sudo podman stop {}
-          sudo podman ps -a -q --filter "name=springTest" | xargs -I {} sudo podman rm {}
+          sudo podman ps -q --filter "name=springtest" | xargs -I {} sudo podman stop {}
+          sudo podman ps -a -q --filter "name=springtest" | xargs -I {} sudo podman rm {}
           
           # 새로운 컨테이너 실행
-          sudo podman run -d --name springTest -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/springTest:latest
+          sudo podman run -d --name springtest -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/springtest:latest
         EOF
