@@ -29,11 +29,10 @@ jobs:
     - name: Build Spring Boot JAR using Gradle
       run: echo $(pwd) && echo $(ls) && ./gradlew clean build -x test  # Gradle을 사용하여 JAR 파일 빌드 (테스트는 생략)
 
-  docker:
-    runs-on: ubuntu-latest  # Ubuntu 환경에서 실행
-    needs: build  # build 작업이 완료된 후 실행됨
+  # docker: // 젠킨스처럼 잡별로 디렉토리가 달라져서 jar빌드와 이미지 빌드 onestep으로 가야함
+    # runs-on: ubuntu-latest  # Ubuntu 환경에서 실행
+    # needs: build  # build 작업이 완료된 후 실행됨
 
-    steps:
     - name: Log in to Docker Hub
       uses: docker/login-action@v2
       with:
