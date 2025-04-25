@@ -42,8 +42,7 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}  # Docker Hub 비밀번호
 
     - name: Build Docker image
-      run: |
-        docker build -t acoursove2/springtest:latest .
+      run: echo $(pwd) && docker build -t acoursove2/springtest:latest .
 
     - name: Push Docker image to Docker Hub
       run: |
