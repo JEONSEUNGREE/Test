@@ -6,61 +6,27 @@ on:
       - master
 
 jobs:
-  build_push:
-    runs-on: ubuntu-latest  # Ubuntu 환경에서 실행
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-    # Java 21 및 Gradle 설정
-    - name: Set up JDK 21
-      uses: actions/setup-java@v2
-      with:
-        java-version: '21'  # Java 21 설정
-        distribution: 'temurin'
-
-    - name: Set up Gradle
-      uses: gradle/wrapper-validation-action@v1
-      with:
-        gradle-version: '8.13'  # 원하는 Gradle 버전 설정 (여기서는 8.13)
-        distribution: 'https://services.gradle.org/distributions/gradle-8.13-bin.zip'
-
-    - name: Build Spring Boot JAR using Gradle
-      run: echo $(pwd) && echo $(ls) && ./gradlew clean build -x test  # Gradle을 사용하여 JAR 파일 빌드 (테스트는 생략)
-
-  # docker: // 젠킨스처럼 잡별로 디렉토리가 달라져서 jar빌드와 이미지 빌드 onestep으로 가야함
-    # runs-on: ubuntu-latest  # Ubuntu 환경에서 실행
-    # needs: build  # build 작업이 완료된 후 실행됨
-
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}  # Docker Hub 사용자명
-        password: ${{ secrets.DOCKER_PASSWORD }}  # Docker Hub 비밀번호
-
-    - name: Build Docker image
-      run: echo $(pwd) && echo $(ls) && docker build -t acoursove2/springtest:latest .
-
-    - name: Push Docker image to Docker Hub
-      run: |
-        docker push acoursove2/springtest:latest
-
-  deploy:
+  deploy:  # 주석 처리된 build_push 작업과 구분
     runs-on: ubuntu-latest
-    needs: build_push  # docker 작업이 완료된 후 실행됨
-
     steps:
-    - name: SSH into EC2 and deploy with Podman
-      run: |
-        ssh -o StrictHostKeyChecking=no -i ${{ secrets.AWS_SSH_KEY }} ubuntu@${{ secrets.AWS_EC2_IP }} << 'EOF'
-          # EC2에서 Podman을 사용하여 Docker Hub에서 이미지 풀
-          sudo podman pull ${{ secrets.DOCKER_USERNAME }}/springtest:latest
-          
-          # 기존 컨테이너가 실행 중이면 종료하고 새 컨테이너 실행
-          sudo podman ps -q --filter "name=springtest" | xargs -I {} sudo podman stop {}
-          sudo podman ps -a -q --filter "name=springtest" | xargs -I {} sudo podman rm {}
-          
-          # 새로운 컨테이너 실행
-          sudo podman run -d --name springtest -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/springtest:latest
-        EOF
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.AWS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa  # SSH 키에 적절한 권한 설정
+
+      - name: Add EC2 to known hosts
+        run: |
+          ssh-keyscan -H ${{ secrets.AWS_EC2_IP }} >> ~/.ssh/known_hosts
+
+      - name: SSH into EC2 and deploy with Podman
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@${{ secrets.AWS_EC2_IP }} << 'EOF'
+            sudo podman pull ${{ secrets.DOCKER_USERNAME }}/springtest:latest
+            sudo podman ps -q --filter "name=springtest" | xargs -I {} sudo podman stop {}
+            sudo podman ps -a -q --filter "name=springtest" | xargs -I {} sudo podman rm {}
+            sudo podman run -d --name springtest -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/springtest:latest
+          EOF
